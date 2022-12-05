@@ -71,7 +71,7 @@ class App extends React.Component {
         </div>
       );
     }
-    {/*<FaceRecognition />"*/ }
+    /*<FaceRecognition />*/
   }
 }
 
