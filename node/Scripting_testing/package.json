@@ -5,7 +5,8 @@
   "description": "Just practice JS in Node",
   "main": "Script.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon"
   },
   "author": "",
   "license": "ISC"
