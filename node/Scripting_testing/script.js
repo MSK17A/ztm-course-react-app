@@ -21,3 +21,13 @@ console.log(large.Script2());*/
 import {Script2} from './Script2.js';
 
 console.log(Script2());
+
+// We can also use await in the import and we can conditionally import modules
+
+let S2 = 0;
+
+if (true) {
+    const {Script2} = await import ('./Script2.js');
+    S2 = Script2();
+}
+console.log(S2)

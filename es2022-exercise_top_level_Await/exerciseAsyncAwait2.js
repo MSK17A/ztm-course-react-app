@@ -9,7 +9,7 @@ async function fetchStarship() {
 
 // --------- Answer:
 
-const response = await fetch("https://jsonplaceholder.typicode.com/users");
+const response = await fetch("https://jsonplaceholder.typicode.com/users").then((resp) => {resp.json()});
 const data = await response.json();
 console.log(data);
 
