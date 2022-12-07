@@ -31,14 +31,13 @@ const urls = [
 
 // --------- Answer:
 
-const getData = async function () {
-  const [users, posts, albums] = await Promise.all(
-    urls.map((url) => fetch(url).then((resp) => resp.json())),
-  );
-  console.log("users", users);
-  console.log("posta", posts);
-  console.log("albums", albums);
-  }
+[users, posts, albums] = await Promise.all(
+  urls.map((url) => fetch(url).then((resp) => resp.json())),
+);
+console.log("users", users);
+console.log("posta", posts);
+console.log("albums", albums);
+
 
 // #3  ADVANCED: Try to run this piece of code just as a JS file not inside the browser dev tool, instea using this:
 //https://glot.io/new/javascript
