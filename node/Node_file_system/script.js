@@ -13,9 +13,9 @@ const file = fs.readFileSync("./file.txt");
 console.log("String 2: " + file.toString());
 
 /* Now what happend above? when I run the code above, "string 1" comes after "string 2", this is because 'readFIle'
-is and asyncronous function which will not be invoked immediatly when you call it. It will wait until it
-finishes reading the file and then will wait for the callback function to finish it operations. However, while it
-is waiting, the code below it will run, think of the asynchronous function as a function that runs in the
-background.
+is and asyncronous function (that is why it has a callback function) which will not be invoked immediatly when you call it.
+It will wait until it finishes reading the file and while it is waiting, you go and keep running the code below,
+and then it will give data (error, buffer), these data will be passed to a callback function later, think of the
+asynchronous function as a function that runs in the background.
 
 That is why you see "String 2" printed before "String 1". */
