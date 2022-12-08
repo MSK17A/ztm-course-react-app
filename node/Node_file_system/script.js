@@ -18,4 +18,7 @@ It will wait until it finishes reading the file and while it is waiting, you go 
 and then it will give data (error, buffer), these data will be passed to a callback function later, think of the
 asynchronous function as a function that runs in the background.
 
+In 'readFileSync' however, it will say "stop what you are doing and wait for me to finish reading the file, and then
+continue. It as a syncronous function."
+
 That is why you see "String 2" printed before "String 1". */
