@@ -7,7 +7,7 @@ getInput('https://adventofcode.com/2015/day/1/input', [getFloor, getBasementChar
 function getFloor(inputData = '') {
     //console.log(inputData);
 
-    console.time('Execution time')
+    console.time('Question 1 execution time')
     let floor = 0;
     for (let index = 0; index < inputData.length; index++) {
         if (inputData[index] === '(')
@@ -18,13 +18,13 @@ function getFloor(inputData = '') {
     }
 
     console.log("Floor: " + floor);
-    console.timeEnd('Execution time');
+    console.timeEnd('Question 1 execution time');
 }
 
 // Question 2
 function getBasementChar(inputData = '') {
 
-    console.time('Execution time')
+    console.time('Question 2 execution time')
     let floor = 0;
     let charPos = 0;
     for (let index = 0; index < inputData.length; index++) {
@@ -40,5 +40,5 @@ function getBasementChar(inputData = '') {
     }
 
     console.log("Character position: " + charPos);
-    console.timeEnd('Execution time');
+    console.timeEnd('Question 2 execution time');
 }
