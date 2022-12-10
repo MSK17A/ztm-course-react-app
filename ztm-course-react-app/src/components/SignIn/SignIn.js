@@ -35,7 +35,9 @@ const SignIn = ({ onRouteChange }) => {
                     </div>
                 </div>
                 <button
-                    onClick={() => onRouteChange("Home")}
+                    onClick={() => onRouteChange("Home")} /* Why you put a function inside a function you may ask?
+                    It is bacause you want to pass it as a reference (onRouteChange) without '()', how ever we have an input here. That is why we put it
+                    inside an arrow function to prevent calling it each time <button> is rendered. */
                     className='btn block-cube block-cube-hover'
                     type='button'>
                     <div className='bg-top'>
