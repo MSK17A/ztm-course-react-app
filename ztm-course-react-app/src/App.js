@@ -18,6 +18,11 @@ class App extends React.Component {
       isSigned: false
     }
   }
+  /*componentDidMount() {
+    fetch('https://localhost:4000/')
+      .then(resonse => resonse.json())
+      .then(console.log); // equivlant to data=>console.log().. Remember the async and callbacks?
+  }*/
 
   // This function deals with routes, it is called whenever a route is change by pressing a button or something else?!
   onRouteChange = (route) => {
@@ -30,6 +35,7 @@ class App extends React.Component {
 
     this.setState({ mRoute: route });
   }
+
   render() {
 
     // Checks if you are in the signed out page, and renders it
