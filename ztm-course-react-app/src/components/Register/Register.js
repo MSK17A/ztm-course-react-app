@@ -13,34 +13,37 @@ class Register extends React.Component {
     }
 
     onUserNameChange = (event) => {
-        this.setState({ registerUserName: event.target.valueOf })
-        console.log(event);
+        this.setState({ registerUserName: event.target.value })
+        console.log(this.state.registerUserName);
     }
     onEmailChange = (event) => {
-        this.setState({ registerEmail: event.target.valueOf })
+        this.setState({ registerEmail: event.target.value })
     }
     onPasswordChange = (event) => {
-        this.setState({ registerPassword: event.target.valueOf })
+        this.setState({ registerPassword: event.target.value })
     }
     onRegisterClick = () => {
-        console.log(JSON.stringify({
+        /*console.log(JSON.stringify({
             name: this.state.registerUserName,
             email: this.state.registerEmail,
-            passowrd: this.state.registerPassword
-        }))
-        fetch('http://localhost/register', {
+            password: this.state.registerPassword
+        }))*/
+
+        fetch('http://localhost:4000/register', {
             method: 'POST',
-            headers: {"Content-Type" : "application/text"},
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 name: this.state.registerUserName,
                 email: this.state.registerEmail,
-                passowrd: this.state.registerPassword
+                password: this.state.registerPassword
             })
         })
-        .then(response => response.json())
-        .then(console.log)
+            .then(response => response.json())
+            .then(user => {
 
-        this.probs.onRouteChange("SignedOut")
+                this.props.loadUser(user);
+                this.props.onRouteChange("Home");
+            })
     }
 
     render() {

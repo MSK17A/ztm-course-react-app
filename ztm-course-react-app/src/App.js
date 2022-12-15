@@ -6,6 +6,7 @@ import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
 import Rank from './components/Rank/Rank';
 import SignIn from './components/SignIn/SignIn';
 import Register from './components/Register/Register';
+import ImageBox from './components/ImageBox/ImageBox';
 import React from 'react';
 
 class App extends React.Component {
@@ -15,7 +16,16 @@ class App extends React.Component {
     super();
     this.state = {
       mRoute: 'SignedOut', //this is signed out page (That requires you to sign in to use the app)
-      isSigned: false
+      isSigned: false,
+      img_url: '', // Try https://assets.weforum.org/article/image/XaHpf_z51huQS_JPHs-jkPhBp0dLlxFJwt-sPLpGJB0.jpg
+      bboxes: [{}],
+      user: { // This is the signed in user.
+        id: '123',
+        name: '',
+        email: '',
+        entries: 0,
+        joined: ''
+      }
     }
   }
   /*componentDidMount() {
@@ -36,6 +46,65 @@ class App extends React.Component {
     this.setState({ mRoute: route });
   }
 
+  // Once you change the url the picture will update and will delete existing boxes.
+  imageUrlChange = (event) => {
+    this.setState({
+      img_url: event.target.value,
+      bboxes: [{}]
+    });
+  }
+
+  // Detect boxes and convert them into pixels. (this will call the server in the back-end)
+  detectBBoxOnClick = () => {
+
+    fetch('http://localhost:4000/image', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: this.state.user.id,
+        img_url: this.state.img_url
+      })
+    })
+      .then(response => response.json())
+      .then(data => {
+
+        const inputImage = document.getElementById("inputImage");
+        const width = inputImage.width; const height = inputImage.height;
+
+        // Below code is to convert boxes values to pixels, to draw it later.
+        for (let bbox = 0; bbox < data.bboxes.length; bbox++) {
+          data.bboxes[bbox].left_col = data.bboxes[bbox].left_col * width;
+          data.bboxes[bbox].top_row = data.bboxes[bbox].top_row * height;
+          data.bboxes[bbox].right_col = width - data.bboxes[bbox].right_col * width;
+          data.bboxes[bbox].bottom_row = height - data.bboxes[bbox].bottom_row * height;
+
+        }
+        // Update the state with the new pixels, and the updated.
+        this.setState({
+          bboxes: data.bboxes,
+        });
+        // Update entries in the user object.
+        this.setState(Object.assign(this.state.user, { entries: data.entries }));
+
+        //console.log(data.bboxes);
+      })
+  }
+
+  // Loads user into the app.
+  loadUser = (data) => {
+
+    this.setState({
+      user: {
+        id: '123',
+        name: data.name,
+        email: data.email,
+        entries: data.entries,
+        joined: data.joined
+      }
+    });
+  }
+
+
   render() {
 
     // Checks if you are in the signed out page, and renders it
@@ -46,7 +115,7 @@ class App extends React.Component {
             <Logo />
             <Navigation onRouteChange={this.onRouteChange} isSigned={this.state.isSigned} />
           </div>
-          <SignIn onRouteChange={this.onRouteChange} />
+          <SignIn onRouteChange={this.onRouteChange} loadUser={this.loadUser} />
         </div>
       );
     }
@@ -58,8 +127,9 @@ class App extends React.Component {
             <Logo />
             <Navigation onRouteChange={this.onRouteChange} isSigned={this.state.isSigned} />
           </div>
-          <Rank />
-          <ImageLinkForm />
+          <Rank name={this.state.user.name} entries={this.state.user.entries} />
+          <ImageLinkForm imageUrlChange={this.imageUrlChange} detectBBoxOnClick={this.detectBBoxOnClick} />
+          <ImageBox imageUrl={this.state.img_url} bounding_boxes={this.state.bboxes} />
         </div>
       );
     }
@@ -73,7 +143,7 @@ class App extends React.Component {
             that checks if the user is signed or not, just to update the navigation buttons*/}
             <Navigation onRouteChange={this.onRouteChange} isSigned={this.state.isSigned} />
           </div>
-          <Register onRouteChange={this.onRouteChange} />
+          <Register onRouteChange={this.onRouteChange} loadUser={this.loadUser} />
         </div>
       );
     }

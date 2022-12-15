@@ -4,6 +4,11 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 const https = require("https");
 const cors = require('cors');
+const { ClarifaiStub, grpc } = require("clarifai-nodejs-grpc");
+const { clarifai_getBBoxes, update_entries } = require('./helperFuncs.js');
+
+const stub = ClarifaiStub.grpc();
+const metadata = new grpc.Metadata();
 
 const app = express();
 /*https.createServer({
@@ -39,7 +44,8 @@ const database = {
 }
 
 app.get('/', (req, res) => {
-    res.json(database.users);
+
+    //res.json(database.users);
     console.log("Users retrived!");
 })
 
@@ -49,7 +55,7 @@ app.post('/signin', (req, res) => {
     bcrypt.compare(req.body.password, database.users[0].password).then((result) => {
         if (req.body.email === database.users[0].email
             && result) {
-            res.json("Hello " + database.users[0].name);
+            res.json(database.users[0]);
         }
         else
             res.status(400).send("Get lost!!!");
@@ -59,21 +65,23 @@ app.post('/signin', (req, res) => {
 
 // Register
 app.post('/register', (req, res) => {
-    bcrypt.hash(req.body.password, 10, function (err, hash) {
-        console.log(hash.toString());
-    });
 
     user = {
         id: '125',
         name: req.body.name,
         email: req.body.email,
-        password: req.body.password,
+        password: '',
         entries: 0,
         joined: new Date()
     }
 
-    database.users.push(user)
-    res.json("Sucessfully registerd!!!");
+    bcrypt.hash(req.body.password, 10, function (err, hash) {
+        console.log(hash.toString());
+        user.password = hash;
+        database.users.push(user)
+
+        res.json(database.users[database.users.length - 1]);
+    });
 })
 
 // Retrive users
@@ -99,20 +107,27 @@ app.get('/profile/:id', (req, res) => {
 
 // Image and rank page
 app.post('/image', (req, res) => {
-    const { id } = req.body; // Params will get :id
+    const { id, img_url } = req.body; // Params will get :id
+    let bboxes = [];
     let found = false;
 
-    database.users.forEach(user => {
-        if (user.id === id) {
-            found = true;
-            user.entries++;
-            return res.json(user.entries);
+    metadata.set("authorization", "Key 984ae0d1293347e6b040243f2da618a0");
+    stub.PostModelOutputs(
+        {
+            // This is the model ID of a publicly available General model. You may use any other public or custom model ID.
+            model_id: "face-detection",
+            inputs: [{ data: { image: { url: img_url } } }]
+        },
+        metadata,
+        (err, response) => {
+            const bboxes = clarifai_getBBoxes(err, response);
+            update_entries(database.users, id, bboxes, res);
         }
-    })
-    if (!found) {
-        res.status(404).json("no such user");
-    }
+    );
 })
+
+
+
 /*
 Sign in   --Success/UnSucsess
 Register

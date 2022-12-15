@@ -18,18 +18,25 @@ class SignIn extends React.Component {
         this.setState({ signInPassword: event.target.value })
     }
 
+    // This function will sign you in once you click the sign in button.
     onSubmitSignIn = () => {
-        
+
         fetch('http://localhost:4000/signin', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 email: this.state.signInEmail,
                 password: this.state.signInPassword
             })
-        }).then(response=>response.json()).then(console.log);
-        
-        this.props.onRouteChange("Home");
+        })
+            .then(response => response.json())
+            .then(user => {
+                if (user.id) {
+                    this.props.loadUser(user);
+                    this.props.onRouteChange("Home");
+                }
+            });
+
     }
     render() {
 
@@ -43,7 +50,7 @@ class SignIn extends React.Component {
                         </h1>
                     </div>
                     <div className='control block-cube block-input'>
-                        <input name='Email' placeholder='Email' type='text' onChange={this.onEmailChange}/>
+                        <input name='Email' placeholder='Email' type='text' onChange={this.onEmailChange} />
                         <div className='bg-top'>
                             <div className='bg-inner'></div>
                         </div>
@@ -55,7 +62,7 @@ class SignIn extends React.Component {
                         </div>
                     </div>
                     <div className='control block-cube block-input'>
-                        <input name='password' placeholder='Password' type='password' onChange={this.onPasswordChange}/>
+                        <input name='password' placeholder='Password' type='password' onChange={this.onPasswordChange} />
                         <div className='bg-top'>
                             <div className='bg-inner'></div>
                         </div>
