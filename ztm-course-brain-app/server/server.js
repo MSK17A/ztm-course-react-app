@@ -4,12 +4,10 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 const https = require("https");
 const cors = require('cors');
-const { ClarifaiStub, grpc } = require("clarifai-nodejs-grpc");
-const { clarifai_getBBoxes } = require('./helperFuncs.js');
 const knex = require('knex');
-
-const stub = ClarifaiStub.grpc();
-const metadata = new grpc.Metadata();
+const register = require('./Controllers/register.js');
+const signIn = require('./Controllers/signin.js');
+const imageBBox = require('./Controllers/image.js');
 
 const app = express();
 /*https.createServer({
@@ -60,57 +58,10 @@ app.get('/', (req, res) => {
 })
 
 // Signing In
-app.post('/signin', (req, res) => {
-
-    const { email, password } = req.body;
-
-    db.select('email', 'hash').from('login').where('email', email)
-        .then(data => {
-            if (bcrypt.compareSync(password, data[0].hash)) {
-                db.select('*').from('users').where('email', email)
-                    .then(user => {
-                        res.json(user[0]);
-
-                    }).catch(err => { res.status(400).json('Unable to get user'); });
-            }
-            else {
-                res.status(400).json('Wrong credentials');
-            }
-        }).catch(err => { res.status(400).json('Wrong credentials'); });
-
-})
+app.post('/signin', (req, res) => { signIn.signInHandler(req, res, db, bcrypt) })
 
 // Register
-app.post('/register', (req, res) => {
-
-    const { name, email, password } = req.body;
-
-    const hash = bcrypt.hashSync(password, 10);
-
-    db.transaction((trx) => {
-        trx.insert({
-            hash: hash,
-            email: email
-        })
-            .into('login')
-            .returning('email')
-            .then(loginEmail => {
-                return trx('users')
-                    .returning('*')
-                    .insert({
-                        email: loginEmail[0].email,
-                        name: name,
-                        joined: new Date()
-                    })
-                    .then(user => {
-                        res.json(user[0]);
-                    })
-            })
-            .then(trx.commit)
-            .catch(trx.rollback)
-    })
-        .catch(err => res.status(400).json("Unable to register!"));
-})
+app.post('/register', (req, res) => { register.registerHandler(req, res, db, bcrypt) });
 
 // Retrive users
 app.get('/users', (req, res) => {
@@ -132,45 +83,7 @@ app.get('/profile/:id', (req, res) => {
 })
 
 // Image and rank page
-app.put('/image', (req, res) => {
-    const { id, img_url } = req.body; // Params will get :id
-
-    metadata.set("authorization", "Key 984ae0d1293347e6b040243f2da618a0");
-    stub.PostModelOutputs(
-        {
-            // This is the model ID of a publicly available General model. You may use any other public or custom model ID.
-            model_id: "face-detection",
-            inputs: [{ data: { image: { url: img_url } } }]
-        },
-        metadata,
-        (err, response) => {
-            const bboxes = clarifai_getBBoxes(response);
-            if (err) {
-                console.log("Error: " + err);
-                res.json('An error has occured!')
-                return;
-            }
-            if (response.status.code !== 10000) {
-                console.log("Received failed status: " + response.status.description + "\n" + response.status.details);
-                res.status(400).json('Receiving image failure!')
-                return;
-            }
-
-            // Increment the entries on the database.
-            db('users')
-                .where('id', '=', id)
-                .increment('entries', 1).returning('entries')
-                .then(entries => {
-
-                    out = {
-                        bboxes: bboxes,
-                        entries: entries[0].entries
-                    }
-                    res.json(out); // return bounding boxes along with entries.
-                });
-        }
-    );
-})
+app.put('/image', (req, res) => { imageBBox.imageHandler(req, res, db); })
 
 
 
