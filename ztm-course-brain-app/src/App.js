@@ -9,6 +9,19 @@ import Register from './components/Register/Register';
 import ImageBox from './components/ImageBox/ImageBox';
 import React from 'react';
 
+const init_state = {
+  mRoute: 'SignedOut', //this is signed out page (That requires you to sign in to use the app)
+  isSigned: false,
+  img_url: '', // Try https://assets.weforum.org/article/image/XaHpf_z51huQS_JPHs-jkPhBp0dLlxFJwt-sPLpGJB0.jpg
+  bboxes: [{}],
+  user: { // This is the signed in user.
+    id: '',
+    name: '',
+    email: '',
+    entries: 0,
+    joined: ''
+  }
+}
 class App extends React.Component {
 
   // The state of the app, wether the user is signed in or not and also where is the user now?
@@ -37,7 +50,9 @@ class App extends React.Component {
   // This function deals with routes, it is called whenever a route is change by pressing a button or something else?!
   onRouteChange = (route) => {
     if (route === "SignedOut") {
-      this.setState({ isSigned: false });
+      //this.setState({ isSigned: false });
+      // To update the state, load the initial state to ensure we cleared the state of the previous user.
+      this.setState(init_state);
     }
     else if (route === "Home") {
       this.setState({ isSigned: true });
