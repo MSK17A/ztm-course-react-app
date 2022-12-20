@@ -1,13 +1,4 @@
-const clarifai_getBBoxes = (err, response) => {
-    if (err) {
-        console.log("Error: " + err);
-        return;
-    }
-
-    if (response.status.code !== 10000) {
-        console.log("Received failed status: " + response.status.description + "\n" + response.status.details);
-        return;
-    }
+const clarifai_getBBoxes = (response) => {
 
     console.log("Predicted concepts, with confidence values:")
     const faces = response.outputs[0].data.regions;
@@ -21,7 +12,7 @@ const clarifai_getBBoxes = (err, response) => {
 
 }
 
-const update_entries = (users, id, bboxes, res) => {
+/*const update_entries = (users, id, bboxes, res) => {
 
     users.forEach(user => {
         if (user.id === id) {
@@ -38,9 +29,8 @@ const update_entries = (users, id, bboxes, res) => {
     if (!found) {
         res.status(404).json("no such user");
     }
-}
+}*/
 
 module.exports = {
     clarifai_getBBoxes,
-    update_entries
 };

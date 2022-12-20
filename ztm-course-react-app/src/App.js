@@ -20,7 +20,7 @@ class App extends React.Component {
       img_url: '', // Try https://assets.weforum.org/article/image/XaHpf_z51huQS_JPHs-jkPhBp0dLlxFJwt-sPLpGJB0.jpg
       bboxes: [{}],
       user: { // This is the signed in user.
-        id: '123',
+        id: '',
         name: '',
         email: '',
         entries: 0,
@@ -58,7 +58,7 @@ class App extends React.Component {
   detectBBoxOnClick = () => {
 
     fetch('http://localhost:4000/image', {
-      method: "POST",
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id: this.state.user.id,
@@ -95,7 +95,7 @@ class App extends React.Component {
 
     this.setState({
       user: {
-        id: '123',
+        id: data.id,
         name: data.name,
         email: data.email,
         entries: data.entries,

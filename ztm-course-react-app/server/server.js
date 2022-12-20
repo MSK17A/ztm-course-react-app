@@ -5,7 +5,8 @@ const fs = require('fs');
 const https = require("https");
 const cors = require('cors');
 const { ClarifaiStub, grpc } = require("clarifai-nodejs-grpc");
-const { clarifai_getBBoxes, update_entries } = require('./helperFuncs.js');
+const { clarifai_getBBoxes } = require('./helperFuncs.js');
+const knex = require('knex');
 
 const stub = ClarifaiStub.grpc();
 const metadata = new grpc.Metadata();
@@ -22,7 +23,7 @@ app.use(bodyparser.json());
 app.use(cors());
 
 // For this time, make our database like this.
-const database = {
+/*const database = {
     users: [
         {
             id: '123',
@@ -41,47 +42,74 @@ const database = {
             joined: new Date()
         }
     ]
-}
+}*/
+
+const db = knex({
+    client: 'pg',
+    connection: {
+        host: '127.0.0.1',
+        port: 5432,
+        user: 'postgres',
+        password: 'test',
+        database: 'smart-brain'
+    }
+});
 
 app.get('/', (req, res) => {
-
-    //res.json(database.users);
-    console.log("Users retrived!");
+    res.json('Server is running!')
 })
 
 // Signing In
 app.post('/signin', (req, res) => {
 
-    bcrypt.compare(req.body.password, database.users[0].password).then((result) => {
-        if (req.body.email === database.users[0].email
-            && result) {
-            res.json(database.users[0]);
-        }
-        else
-            res.status(400).send("Get lost!!!");
-    })
+    const { email, password } = req.body;
+
+    db.select('email', 'hash').from('login').where('email', email)
+        .then(data => {
+            if (bcrypt.compareSync(password, data[0].hash)) {
+                db.select('*').from('users').where('email', email)
+                    .then(user => {
+                        res.json(user[0]);
+
+                    }).catch(err => { res.status(400).json('Unable to get user'); });
+            }
+            else {
+                res.status(400).json('Wrong credentials');
+            }
+        }).catch(err => { res.status(400).json('Wrong credentials'); });
 
 })
 
 // Register
 app.post('/register', (req, res) => {
 
-    user = {
-        id: '125',
-        name: req.body.name,
-        email: req.body.email,
-        password: '',
-        entries: 0,
-        joined: new Date()
-    }
+    const { name, email, password } = req.body;
 
-    bcrypt.hash(req.body.password, 10, function (err, hash) {
-        console.log(hash.toString());
-        user.password = hash;
-        database.users.push(user)
+    const hash = bcrypt.hashSync(password, 10);
 
-        res.json(database.users[database.users.length - 1]);
-    });
+    db.transaction((trx) => {
+        trx.insert({
+            hash: hash,
+            email: email
+        })
+            .into('login')
+            .returning('email')
+            .then(loginEmail => {
+                return trx('users')
+                    .returning('*')
+                    .insert({
+                        email: loginEmail[0].email,
+                        name: name,
+                        joined: new Date()
+                    })
+                    .then(user => {
+                        res.json(user[0]);
+                    })
+            })
+            .then(trx.commit)
+            .catch(trx.rollback)
+    })
+        .catch(err => res.status(400).json("Unable to register!"));
 })
 
 // Retrive users
@@ -89,27 +117,23 @@ app.get('/users', (req, res) => {
     res.send(database.users);
 })
 
-// Profile page
+// Profile page (Future development) (not used in the front-end);
 app.get('/profile/:id', (req, res) => {
     const { id } = req.params; // Params will get :id
-    let found = false;
 
-    database.users.forEach(user => {
-        if (user.id === id) {
-            found = true;
-            return res.json(user);
+    db.select('*').from('users').where('id', id).then(user => {
+
+        if (user.length) { // Since the legnth (if user exists) will be more than zero, then it will be true.
+            res.json(user[0]);
+        } else {
+            res.status(400).json('User not found!');
         }
     })
-    if (found === false) {
-        res.status(404).json("no such user");
-    }
 })
 
 // Image and rank page
-app.post('/image', (req, res) => {
+app.put('/image', (req, res) => {
     const { id, img_url } = req.body; // Params will get :id
-    let bboxes = [];
-    let found = false;
 
     metadata.set("authorization", "Key 984ae0d1293347e6b040243f2da618a0");
     stub.PostModelOutputs(
@@ -120,8 +144,30 @@ app.post('/image', (req, res) => {
         },
         metadata,
         (err, response) => {
-            const bboxes = clarifai_getBBoxes(err, response);
-            update_entries(database.users, id, bboxes, res);
+            const bboxes = clarifai_getBBoxes(response);
+            if (err) {
+                console.log("Error: " + err);
+                res.json('An error has occured!')
+                return;
+            }
+            if (response.status.code !== 10000) {
+                console.log("Received failed status: " + response.status.description + "\n" + response.status.details);
+                res.status(400).json('Receiving image failure!')
+                return;
+            }
+
+            // Increment the entries on the database.
+            db('users')
+                .where('id', '=', id)
+                .increment('entries', 1).returning('entries')
+                .then(entries => {
+
+                    out = {
+                        bboxes: bboxes,
+                        entries: entries[0].entries
+                    }
+                    res.json(out); // return bounding boxes along with entries.
+                });
         }
     );
 })
