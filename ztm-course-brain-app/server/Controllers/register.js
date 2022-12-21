@@ -1,8 +1,10 @@
 
 
-const registerHandler = (req, res, db, bcrypt) => {
+const registerHandler = (db, bcrypt) => (req, res) => {
 
     const { name, email, password } = req.body;
+    if (!name || !email || !password)
+        return res.status(400).json("Check all fields!");
 
     const hash = bcrypt.hashSync(password, 10);
 

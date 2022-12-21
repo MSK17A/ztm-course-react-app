@@ -8,6 +8,7 @@ const knex = require('knex');
 const register = require('./Controllers/register.js');
 const signIn = require('./Controllers/signin.js');
 const imageBBox = require('./Controllers/image.js');
+const profileId = require('./Controllers/profileId.js');
 
 const app = express();
 /*https.createServer({
@@ -15,7 +16,7 @@ const app = express();
     cert: fs.readFileSync('./certs/cert.pem'),
 }, app).listen(4000);*/
 
-app.listen(4000)
+app.listen(process.env.PORT) // Command 'PORT=3000 node server.js'
 
 app.use(bodyparser.json());
 app.use(cors());
@@ -58,10 +59,12 @@ app.get('/', (req, res) => {
 })
 
 // Signing In
-app.post('/signin', (req, res) => { signIn.signInHandler(req, res, db, bcrypt) })
+app.post('/signin', (req, res) => { signIn.signInHandler(req, res, db, bcrypt); })
 
 // Register
-app.post('/register', (req, res) => { register.registerHandler(req, res, db, bcrypt) });
+/* This function will be called, and then it will have (req, res) passed to it.
+Like a function inside a function, same as sign in route above. */
+app.post('/register', register.registerHandler(db, bcrypt));
 
 // Retrive users
 app.get('/users', (req, res) => {
@@ -69,18 +72,7 @@ app.get('/users', (req, res) => {
 })
 
 // Profile page (Future development) (not used in the front-end);
-app.get('/profile/:id', (req, res) => {
-    const { id } = req.params; // Params will get :id
-
-    db.select('*').from('users').where('id', id).then(user => {
-
-        if (user.length) { // Since the legnth (if user exists) will be more than zero, then it will be true.
-            res.json(user[0]);
-        } else {
-            res.status(400).json('User not found!');
-        }
-    })
-})
+app.get('/profile/:id', (req, res) => { profileId.profileIdHandler(req, res, db); })
 
 // Image and rank page
 app.put('/image', (req, res) => { imageBBox.imageHandler(req, res, db); })

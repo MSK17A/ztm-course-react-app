@@ -2,6 +2,9 @@ const signInHandler = (req, res, db, bcrypt) => {
 
     const { email, password } = req.body;
 
+    if (!email || !password)
+        return res.status(400).json('Check fields!');
+
     db.select('email', 'hash').from('login').where('email', email)
         .then(data => {
             if (bcrypt.compareSync(password, data[0].hash)) {
